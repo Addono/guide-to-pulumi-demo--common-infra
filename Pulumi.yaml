@@ -1,0 +1,3 @@
+name: guide-to-pulumi--common-infra
+runtime: nodejs
+description: Common infrastructure includes the resources shared by multiple projects (e.g., DBs, networks, container registries)
