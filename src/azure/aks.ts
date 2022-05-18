@@ -16,6 +16,9 @@ const managedClusterName = `${pulumi.getStack()}-aks`
 const resourceGroupName = `${managedClusterName}-rg`
 const nodeResourceGroupName = `${managedClusterName}-node-rg`
 
+/**
+ * Create a resource-group for the cluster
+ */
 export const resourceGroup = new azure.resources.ResourceGroup("aks-rg", {
   resourceGroupName,
   tags: {
@@ -24,6 +27,9 @@ export const resourceGroup = new azure.resources.ResourceGroup("aks-rg", {
   },
 })
 
+/**
+ * Handle IAM for the cluster
+ */
 const controlManagedIdentity = new azure.managedidentity.UserAssignedIdentity("aks-control-plane-managed-identity", {
   resourceGroupName: resourceGroup.name,
   resourceName: `${pulumi.getStack()}-aks-control-identity`,
@@ -44,6 +50,19 @@ const commonAcrRoleAssignment = new azure.authorization.RoleAssignment(
   }
 )
 
+const managedIdentityOperatorRoleAssignment = new azure.authorization.RoleAssignment(
+  "managed-identity-operator-role-assignment-control-plane",
+  {
+    principalId: controlManagedIdentity.principalId,
+    principalType: azure.authorization.PrincipalType.ServicePrincipal,
+    roleDefinitionId: `/subscriptions/${subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/f1a07417-d97a-45cb-824c-7a7467783830`,
+    scope: kubeletManagedIdentity.id,
+  }
+)
+
+/**
+ * Create the cluster
+ */
 export const cluster = new azure.containerservice.ManagedCluster(
   "aks-cluster",
   {
@@ -96,6 +115,7 @@ export const cluster = new azure.containerservice.ManagedCluster(
     ],
   },
   {
+    dependsOn: [commonAcrRoleAssignment, managedIdentityOperatorRoleAssignment],
     ignoreChanges: [
       // see warning comment above
       "agentPoolProfiles",
