@@ -120,6 +120,5 @@ export const cluster = new azure.containerservice.ManagedCluster(
       // see warning comment above
       "agentPoolProfiles",
     ],
-    protect: true,
   }
 )
