@@ -21,9 +21,21 @@ const nodeResourceGroupName = `${managedClusterName}-node-rg`
  */
 export const resourceGroup = new azure.resources.ResourceGroup("aks-rg", {
   resourceGroupName,
-  tags: {
-    project: pulumi.getProject(),
-    stack: pulumi.getStack(),
+})
+
+/**
+ * Register an IP address for the cluster
+ */
+export const publicIngressIpAddress = new azure.network.PublicIPAddress("aks-public-ip", {
+  dnsSettings: {
+    domainNameLabel: `${pulumi.getStack()}-lb-public-ip`,
+  },
+  publicIpAddressName: `${pulumi.getStack()}-lb-public-ip`,
+  publicIPAllocationMethod: azure.network.IPAllocationMethod.Static,
+  resourceGroupName: resourceGroup.name,
+  sku: {
+    name: azure.network.PublicIPAddressSkuName.Standard,
+    tier: azure.network.PublicIPAddressSkuTier.Regional,
   },
 })
 
@@ -38,6 +50,23 @@ const controlManagedIdentity = new azure.managedidentity.UserAssignedIdentity("a
 const kubeletManagedIdentity = new azure.managedidentity.UserAssignedIdentity("aks-kubelet-managed-identity", {
   resourceGroupName: resourceGroup.name,
   resourceName: `${pulumi.getStack()}-aks-kubelet-identity`,
+})
+
+const ipRoleAssignmentControl = new azure.authorization.RoleAssignment(
+  "network-contributor-role-assignment-control-plane",
+  {
+    principalId: controlManagedIdentity.principalId,
+    principalType: azure.authorization.PrincipalType.ServicePrincipal,
+    roleDefinitionId: `/subscriptions/${subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/4d97b98b-1d4f-4787-a291-c67834d212e7`,
+    scope: resourceGroup.id,
+  }
+)
+
+const ipRoleAssignmentKubelet = new azure.authorization.RoleAssignment("network-contributor-role-assignment-kubelet", {
+  principalId: kubeletManagedIdentity.principalId,
+  principalType: azure.authorization.PrincipalType.ServicePrincipal,
+  roleDefinitionId: `/subscriptions/${subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/4d97b98b-1d4f-4787-a291-c67834d212e7`,
+  scope: resourceGroup.id,
 })
 
 const commonAcrRoleAssignment = new azure.authorization.RoleAssignment(
@@ -92,6 +121,23 @@ export const cluster = new azure.containerservice.ManagedCluster(
       project: pulumi.getProject(),
       stack: pulumi.getStack(),
     },
+    /**
+     * WARNING: The following sections are broken. The options work in the
+     * creation of a new cluster, but not when updating an existing cluster.
+     * Any changes made to an existing cluster should be manually performed
+     * in the Azure portal or through the az cli
+     */
+    networkProfile: {
+      loadBalancerProfile: {
+        outboundIPs: {
+          publicIPs: [
+            {
+              id: publicIngressIpAddress.id,
+            },
+          ],
+        },
+      },
+    },
     // Agent pools can only be updated through the az cli:
     // https://docs.microsoft.com/en-us/rest/api/aks/agent-pools/create-or-update
     agentPoolProfiles: [
@@ -115,10 +161,16 @@ export const cluster = new azure.containerservice.ManagedCluster(
     ],
   },
   {
-    dependsOn: [commonAcrRoleAssignment, managedIdentityOperatorRoleAssignment],
+    dependsOn: [
+      ipRoleAssignmentControl,
+      ipRoleAssignmentKubelet,
+      commonAcrRoleAssignment,
+      managedIdentityOperatorRoleAssignment,
+    ],
     ignoreChanges: [
       // see warning comment above
       "agentPoolProfiles",
+      "networkProfile",
     ],
   }
 )

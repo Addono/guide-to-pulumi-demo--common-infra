@@ -52,3 +52,8 @@ if (
  * ACR
  */
 export const acrSKU = config.get("acrSKU") || azure.containerregistry.SkuName.Standard
+
+/**
+ * DNS
+ */
+export const domainName = config.require("domainName")

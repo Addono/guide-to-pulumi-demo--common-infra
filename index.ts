@@ -1,11 +1,13 @@
 /**
  * Export AKS
  */
-import { resourceGroup as aksResourceGroup, cluster as aksCluster } from "./src/azure/aks"
+import * as aks from "./src/azure/aks"
 
 export const kubernetesCluster = {
-  resourceName: aksCluster.name,
-  resourceGroupName: aksResourceGroup.name,
+  resourceName: aks.cluster.name,
+  resourceGroupName: aks.resourceGroup.name,
+  domainName: aks.cluster.fqdn,
+  ipAddress: [aks.publicIngressIpAddress.ipAddress],
 }
 
 /**
@@ -17,3 +19,19 @@ export const containerRegistry = {
   registryName: registry.name,
   resourceGroupName: acrResourceGroup.name,
 }
+
+/**
+ * Export DNS zone
+ */
+import * as dns from "./src/azure/dns"
+
+export const dnsZone = {
+  zoneName: dns.dnsZone.name,
+  resourceGroupName: dns.resourceGroup.name,
+  nameServers: dns.dnsZone.nameServers
+}
+
+/**
+ * Export K8s imports
+ */
+export * from "./src/kubernetes"

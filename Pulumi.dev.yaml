@@ -1,9 +1,10 @@
 config:
-  azure-common-infra:defaultNodePoolCount: "1"
-  azure-common-infra:defaultNodePoolMaxCount: "2"
-  azure-common-infra:defaultNodePoolMinCount: "1"
-  azure-common-infra:defaultNodePoolVmSize: Standard_B2s
-  azure-common-infra:kubernetesVersion: 1.22.4
+  guide-to-pulumi--common-infra:defaultNodePoolCount: "1"
+  guide-to-pulumi--common-infra:defaultNodePoolMaxCount: "2"
+  guide-to-pulumi--common-infra:defaultNodePoolMinCount: "1"
+  guide-to-pulumi--common-infra:defaultNodePoolVmSize: Standard_B2s
+  guide-to-pulumi--common-infra:domainName: guide.to.pulumi.aknapen.nl
+  guide-to-pulumi--common-infra:kubernetesVersion: 1.22.4
   azure-native:location: westeurope
   azure-native:subscriptionId: 169d4909-3a29-4be6-b84a-43f01a360f3f
-  azure-native:tenantId: 80714421-3ab2-450b-8ae3-0d780029016f
+  azure-native:tenantId: b7cff52d-a4ec-4367-903c-5cf05c061aca
