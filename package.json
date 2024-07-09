@@ -11,7 +11,7 @@
     "@pulumi/kubernetes": "^3.15.1",
     "@pulumi/pulumi": "^3.23.2",
     "@pulumi/random": "^4.2.0",
-    "zod": "^3.11.6"
+    "zod": "^3.22.3"
   },
   "devDependencies": {
     "@addono/prettier-config": "^1.0.0",
